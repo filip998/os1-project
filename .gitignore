@@ -1,0 +1,8 @@
+/build/
+/kernel
+/kernel.asm
+/.gdbinit
+/.idea/
+/debug-artifacts/
+.DS_Store
+*.zip
