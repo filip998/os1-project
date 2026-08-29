@@ -67,7 +67,6 @@ void userMain() {
 #if LEVEL_2_IMPLEMENTED == 1
 
             Threads_CPP_API_test();
-            printString("POSLE TEST 2\n");
             printString("TEST 2 (zadatak 2., niti CPP API i sinhrona promena konteksta)\n");
 #endif
             break;
