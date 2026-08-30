@@ -5,8 +5,8 @@
 _entry:
     la sp, stack_top
 
-    # Delegiraj exception "ecall from S-mode" u S-mode
-    li t0, (1 << 9)
+    # Delegiraj U-mode i S-mode ecall izuzetke u S-mode
+    li t0, (1 << 8) | (1 << 9)
     csrw medeleg, t0
 
     # mstatus.MPP = Supervisor mode (01)
