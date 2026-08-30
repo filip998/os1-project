@@ -29,6 +29,8 @@ int main() {
     thread_t t;
     thread_create(&t, wrapperUserMain, nullptr);
 
+    Riscv::ms_sie(Riscv::SIE_SSIE);
+
     while (true) {
         thread_dispatch();
     }

@@ -11,10 +11,13 @@ void TCB::thread_dispatch() {
         Scheduler::put(old);
     }
     running = Scheduler::get();
-    if(!running or running == old) return;
+    if(!running or running == old) {
+        reset_time_slice();
+        return;
+    }
+    reset_time_slice();
     context_switch(&old->context, &running->context);
 
-    //reset_time_slice();
 }
 
 void TCB::thread_wrapper() {
@@ -86,9 +89,8 @@ int TCB::thread_exit() {
     Mem::mem_free(old->stack);
     Mem::mem_free(old);
 
+    reset_time_slice();
     context_switch(&old_context, &running->context);
-
-    //reset_time_slice();
 
     return 0;
 }
@@ -102,8 +104,8 @@ int TCB::time_sleep(time_t time) {
 
     if (!running) return -1;
 
+    reset_time_slice();
     context_switch(&old->context, &running->context);
-    //reset_time_slice();
     return 0;
 }
 
@@ -120,4 +122,3 @@ void TCB::decrease_time_slice() {
 bool TCB::time_slice_expired() {
     return time_slice == 0;
 }
-

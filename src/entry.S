@@ -1,17 +1,20 @@
 .section .entry_os
 .global _entry
 .type _entry, @function
+.extern timerinit
 
 _entry:
     la sp, stack_top
 
     # Delegiraj U-mode i S-mode ecall izuzetke u S-mode
-    li t0, (1 << 8) | (1 << 9)
+    li t0, (1 << 2) | (1 << 8) | (1 << 9)
     csrw medeleg, t0
 
     # Delegiraj supervisor external interrupt u S-mode
-    li t0, (1 << 9)
+    li t0, (1 << 1) | (1 << 9)
     csrw mideleg, t0
+
+    call timerinit
 
     # mstatus.MPP = Supervisor mode (01)
     csrr t0, mstatus

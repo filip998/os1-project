@@ -19,6 +19,7 @@ class Riscv {
         };
 
         enum BitMaskSie {
+            SIE_SSIE = (1<<1),
             SIE_SEIE = (1<<9),
         };
 

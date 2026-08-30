@@ -30,13 +30,19 @@ enum register_slot {
 };
 
 void Handlers::handle_timer_interrupt() {
+    uint64 volatile sepc = r_sepc();
+    uint64 volatile sstatus = r_sstatus();
+
     mc_sip(1<<1);
-    //TCB::decrease_time_slice();
+    TCB::decrease_time_slice();
     //Scheduler::update_sleeping();
 
     if (TCB::time_slice_expired()) {
         TCB::thread_dispatch();
     }
+
+    w_sstatus(sstatus);
+    w_sepc(sepc);
 }
 
 void Handlers::handle_exception() {

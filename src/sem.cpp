@@ -54,6 +54,7 @@ void semaphore::block(unsigned n) {
     TCB* old = TCB::running;
     TCB::running = Scheduler::get();
 
+    TCB::reset_time_slice();
     context_switch(&old->context, &TCB::running->context);
 }
 
