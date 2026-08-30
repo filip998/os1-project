@@ -2,8 +2,8 @@
 
 ## Trenutno stanje pri handoff-u
 
-`bootstrap-working` milestone, memorijska dijagnostika i ciljani javni testovi
-1, 2 i 7 su zavrseni. Rad je spreman za zavrsni read-only pregled opsega.
+`bootstrap-working` milestone, memorijska dijagnostika i javni testovi 1-7 su
+zavrseni. Rad je spreman za zavrsni read-only pregled.
 
 Zavrseno:
 
@@ -44,15 +44,23 @@ Niste uneli odgovarajuci broj za test
 - detaljna evidencija testova je u `docs/test-status.md`;
 - dijagnosticki harness i sirovi logovi ostaju u gitignored
   `debug-artifacts/` i ne ulaze u predajni kod.
+- RCA 008 je povezao ETF timer, asinhroni preemption i cuvanje trap CSR
+  registara; commitovan je kao `268a7eb`;
+- RCA 009 je aktivirao postojeci sleep handler, sleep queue tick i C++ sleep
+  wrapper; commitovan je kao `c6bce1e`;
+- originalni Testovi 5 i 6 prolaze, a zvanicni test fajlovi su uvezeni sa samo
+  potrebnim include prilagodjavanjem;
+- nivoi 3 i 4 su ukljuceni u kanonskom `userMain`.
 
 Tag `bootstrap-working` oznacava prvi meni checkpoint. Tag `memory-working`
 oznacava stanje u kom memorijska dijagnostika i ciljani javni testovi prolaze.
 Git status na oba checkpoint-a mora biti cist.
 
-Sledeci korak je Todo 10: read-only pregled celog opsega prema PDF-u. Posebno
-proveriti poznatu `thread_create` ABI neuskladjenost (`a6/a7` umesto `a3/a4`)
-i zahtev za uklanjanje `lib/mem.lib` kada se koristi studentski alokator.
-Nijednu novu izmenu ne primenjivati bez zasebnog dokaza, RCA-a i odobrenja.
+Sledeci korak je read-only pregled celog implementiranog opsega prema PDF-u.
+Posebno proveriti poznatu `thread_create` ABI neuskladjenost (`a6/a7` umesto
+`a3/a4`) i zahtev za uklanjanje `lib/mem.lib` kada se koristi studentski
+alokator. Nijednu novu izmenu ne primenjivati bez zasebnog dokaza, RCA-a i
+odobrenja.
 
 ## Problem i cilj
 

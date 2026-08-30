@@ -15,11 +15,11 @@ njegove zavrsne oznake, a ne samo da je zapoceo izvrsavanje.
 | 2 | Niti kroz C++ API | PROLAZI |
 | 3 | Producer-consumer kroz C API i semafore | PROLAZI |
 | 4 | Producer-consumer kroz C++ API i semafore | PROLAZI |
+| 5 | `time_sleep` kroz C API | PROLAZI |
+| 6 | C++ producer-consumer sa sleep/preemption | PROLAZI |
 | 7 | Provera izvrsavanja korisnickog koda u U-mode-u | PROLAZI (GDB) |
 
-Testovi 5 i 6 nisu pokrenuti. U kanonskom `src/userMain.cpp` nivoi 3 i 4
-ostaju iskljuceni; Testovi 3 i 4 su pokrenuti kroz privremene, gitignored
-`userMain` harness-e u VM kopiji.
+Svi nivoi su ukljuceni u kanonskom `src/userMain.cpp`.
 
 ## Memorijska dijagnostika kroz C API
 
@@ -409,6 +409,112 @@ producer-ima. Zato izlaz deluje mnogo brze.
 Ovo ne menja rezultat testa: oba duza scenarija zavrsila su nakon Esc-a.
 
 Test fajlovi nisu menjani.
+
+## Test 5: sleep kroz C API
+
+Izvor:
+
+```text
+test/ThreadSleep_C_API_test.cpp
+```
+
+### Kratak opis
+
+Test pravi dve niti sa sleep periodima 10 i 20 timer tick-ova. Svaka nit pet
+puta ispisuje svoj period i poziva:
+
+```cpp
+time_sleep(sleep_time);
+```
+
+Test proverava timer preemption, sleep red, odbrojavanje tick-ova, budjenje i
+ponovno rasporedjivanje niti.
+
+### Rezultat
+
+Status: **PROLAZI**
+
+Originalni test je zavrsio sa svih deset ocekivanih ispisa:
+
+```text
+Hello 10 !
+Hello 20 !
+Hello 10 !
+Hello 20 !
+Hello 10 !
+Hello 10 !
+Hello 20 !
+Hello 10 !
+Hello 20 !
+Hello 20 !
+TEST 5 (zadatak 4., thread_sleep test C API)
+```
+
+GDB je posebno pratio prvi `sleep(10)` poziv. Nit se vratila posle 14 tick-ova,
+odnosno ne pre trazenih 10. Razlika predstavlja vreme dok probudjena ready nit
+ponovo ne dodje na red.
+
+Lokalni logovi:
+
+```text
+debug-artifacts/test5-postfix.log
+debug-artifacts/009-sleep-duration.log
+```
+
+## Test 6: C++ producer-consumer sa sleep/preemption
+
+Izvor:
+
+```text
+test/ConsumerProducer_CPP_API_test.cpp
+```
+
+### Kratak opis
+
+Test kombinuje:
+
+- C++ `Thread`, `Semaphore`, `Console` i `BufferCPP`;
+- asinhroni timer preemption;
+- `Thread::sleep`;
+- producer-consumer sinhronizaciju;
+- destruktore i `delete` cleanup.
+
+Obicni producer-i posle svakog upisa pozivaju:
+
+```cpp
+Thread::sleep((i + id) % 5);
+```
+
+### Rezultat
+
+Status: **PROLAZI**
+
+Pokrenut je originalni test sa:
+
+```text
+producer-i: 5
+velicina bafera: 10
+keyboard unos: 100 poznatih znakova
+zavrsetak: Esc
+```
+
+Test je zavrsio sa:
+
+```text
+Buffer deleted!
+!!
+TEST 6 (zadatak 4. CPP API i asinhrona promena konteksta)
+```
+
+Svih 90 alfabetnih znakova poznatog payload-a pojavilo se u tacnom redosledu.
+Preostalih 10 keyboard znakova bile su cifre i ne mogu se jednoznacno odvojiti
+od cifara koje istovremeno proizvode producer niti.
+
+Lokalni log:
+
+```text
+debug-artifacts/test6-full.log
+```
 
 ## Test 7: provera korisnickog rezima
 

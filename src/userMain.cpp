@@ -2,8 +2,8 @@
 
 #define LEVEL_1_IMPLEMENTED 1
 #define LEVEL_2_IMPLEMENTED 1
-#define LEVEL_3_IMPLEMENTED 0
-#define LEVEL_4_IMPLEMENTED 0
+#define LEVEL_3_IMPLEMENTED 1
+#define LEVEL_4_IMPLEMENTED 1
 
 #if LEVEL_2_IMPLEMENTED == 1
 // TEST 1 (zadatak 2, niti C API i sinhrona promena konteksta)
@@ -26,7 +26,6 @@
 #include "../test/ThreadSleep_C_API_test.hpp"
 // TEST 6 (zadatak 4. CPP API i asinhrona promena konteksta)
 #include "../test/ConsumerProducer_CPP_API_test.hpp"
-#include "System_Mode_test.hpp"
 
 #endif
 

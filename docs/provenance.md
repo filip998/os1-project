@@ -18,3 +18,8 @@ Naknadnim prosirenjem opsega na Test 3 utvrdjeno je da su njegov C test i
 `semaphore`. Pozivi su vraceni na zvanicne `sem_open`, `sem_wait`,
 `sem_signal` i `sem_close` C API funkcije iz arhive
 `javniTestovi_2024_1_1.zip`; zadrzane su samo potrebne include putanje.
+
+Testovi 5 i 6 su naknadno uvezeni iz iste zvanicne arhive. Njihova logika nije
+menjana; prilagodjena je samo include putanja za `printing.hpp`. Nivoi 3 i 4
+su ukljuceni u `src/userMain.cpp` tek nakon sto su testovi 3-6 zasebno
+potvrdjeni.
