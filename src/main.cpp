@@ -4,6 +4,7 @@
 #include "../h/printing.hpp"
 
 extern void userMain();
+extern "C" void consoleinit();
 
 void wrapperUserMain(void*) {
     userMain();
@@ -11,6 +12,7 @@ void wrapperUserMain(void*) {
 
 int main() {
     Riscv::w_stvec((uint64)&Riscv::supervisorTrap);
+    consoleinit();
     Riscv::ms_sstatus(Riscv::SSTATUS_SIE);
 
     thread_t m;
@@ -28,4 +30,3 @@ int main() {
 
     return 0;
 }
-
