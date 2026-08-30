@@ -13,9 +13,13 @@ njegove zavrsne oznake, a ne samo da je zapoceo izvrsavanje.
 | Memorijska dijagnostika | `mem_alloc` / `mem_free` kroz javni C API | PROLAZI |
 | 1 | Niti kroz C API i sinhrona promena konteksta | PROLAZI |
 | 2 | Niti kroz C++ API | PROLAZI |
+| 3 | Producer-consumer kroz C API i semafore | PROLAZI |
+| 4 | Producer-consumer kroz C++ API i semafore | PROLAZI |
 | 7 | Provera izvrsavanja korisnickog koda u U-mode-u | PROLAZI (GDB) |
 
-Testovi 3-6 nisu deo trenutnog opsega i iskljuceni su u `src/userMain.cpp`.
+Testovi 5 i 6 nisu pokrenuti. U kanonskom `src/userMain.cpp` nivoi 3 i 4
+ostaju iskljuceni; Testovi 3 i 4 su pokrenuti kroz privremene, gitignored
+`userMain` harness-e u VM kopiji.
 
 ## Memorijska dijagnostika kroz C API
 
@@ -255,6 +259,156 @@ debug-artifacts/test2-full.log
    pa je QEMU rucno zaustavljen tek nakon zavrsetka testa.
 
 Test fajl nije menjan.
+
+## Test 3: producer-consumer kroz C API
+
+Izvori:
+
+```text
+test/ConsumerProducer_C_API_test.cpp
+src/buffer.cpp
+```
+
+### Kratak opis
+
+Test pravi jednog consumer-a i zadati broj producer niti. Producer sa ID-em
+0 cita tastaturu, a ostali producer-i ubacuju cifre koje odgovaraju njihovim
+ID vrednostima. Consumer vadi sve znakove iz zajednickog bafera.
+
+`Buffer` koristi javne C API funkcije:
+
+```text
+sem_open
+sem_wait
+sem_signal
+sem_close
+```
+
+Svaka od njih prolazi kroz `ecall`, trap i internu implementaciju semafora.
+Esc (`0x1b`) zavrsava keyboard producer i postavlja zajednicki `threadEnd`.
+
+### Rezultat
+
+Status: **PROLAZI**
+
+Validan scenario sa 3 producer-a i baferom velicine 8 zavrsio je sa:
+
+```text
+abc!
+Buffer deleted!
+!
+TEST 3 (zadatak 3., kompletan C API sa semaforima, sinhrona promena konteksta)
+```
+
+Dodatni scenario sa 5 producer-a i baferom velicine 10 takodje je zavrsen kod
+korisnika. U izlazu su se ocekivano mesali uneti znakovi i cifre `1-4`.
+
+Lokalni log:
+
+```text
+debug-artifacts/test3-c-api-postfix.log
+```
+
+### Napomene o testu
+
+1. Za ulaz `10/8` test radi early return zato sto je broj producer-a veci od
+   bafera. Zvanicna poruka pogresno kaze „ne sme biti manji“, a treba „ne sme
+   biti veci“. Zavrsna oznaka nakon tog early return-a nije dokaz testiranja
+   semafora.
+
+2. Test je interaktivan. Posle validnih parametara mora da primi znakove i Esc;
+   bez Esc-a `threadEnd` ostaje nula i test nema uslov za zavrsetak.
+
+3. Originalni ZIP koristi globalne `sem_*` C API funkcije. Pre-fix studentski
+   snapshot ih je zamenio direktnim `semaphore::sem_*` pozivima, sto je
+   zaobilazilo trap. Zvanicni pozivi su vraceni pre merodavnog testa.
+
+4. Razdvojeni inline asm blokovi u semaphore wrapperima gubili su argumente.
+   Posle RCA 007 svaki syscall koristi jedan extended-asm blok.
+
+Test algoritam nije menjan u odnosu na zvanicni ZIP.
+
+## Test 4: producer-consumer kroz C++ API
+
+Izvori:
+
+```text
+test/ConsumerProducer_CPP_Sync_API_test.cpp
+test/buffer_CPP_API.cpp
+```
+
+### Kratak opis
+
+Test koristi isti producer-consumer scenario kao Test 3, ali kroz C++ klase:
+
+```text
+Thread
+Semaphore
+Console
+BufferCPP
+```
+
+Time dodatno proverava `new/delete`, izvedene `Thread` klase, virtuelni `run`,
+C++ semaphore omotace i destruktore svih napravljenih objekata.
+
+### Rezultat
+
+Status: **PROLAZI**
+
+Prvi scenario sa 5 producer-a, baferom velicine 10, 100 ulaznih znakova i
+Esc-om zavrsio je do oznake Testa 4.
+
+Zatim je pokrenut stres scenario:
+
+```text
+producer-i: 5
+velicina bafera: 10
+keyboard unos: 500 znakova
+ritam: 50 grupa po 10 znakova, najmanje 5 sekundi izmedju grupa
+zavrsetak: Esc
+```
+
+Test je tokom celog unosa napredovao, ispraznio preostale znakove, izvrsio
+destruktore i zavrsio sa:
+
+```text
+Buffer deleted!
+324!!
+TEST 4 (zadatak 3., kompletan CPP API sa semaforima, sinhrona promena konteksta)
+```
+
+`324` su znaci koje su producer niti vec ubacile pre nego sto su primetile
+`threadEnd`. Prvi `!` ubacuje keyboard producer na Esc, a poslednji `!`
+bezuslovno ispisuje `BufferCPP` destruktor.
+
+Lokalni logovi:
+
+```text
+debug-artifacts/test4-full.log
+debug-artifacts/test4-stress-500.log
+```
+
+### Zasto Enter menja dozivljenu brzinu?
+
+`producerKeyboard` poziva blokirajuci `getc`. Dok ceka sledeci znak unutar
+bazne konzole, taj poziv nije povezan sa studentskim schedulerom, pa ostale
+kooperativne niti ne dobijaju procesor.
+
+Kada korisnik unosi jedan znak, ceka i zatim pritiska Enter:
+
+- ljudske pauze ostavljaju `getc` dugo blokiranim;
+- Enter dodaje jos jedan `'\n'` znak koji prolazi kroz bafer;
+- terminal ili konzolna biblioteka mogu isporucivati unos u grupama;
+- izlaz zato dolazi u vidljivim naletima umesto odmah posle svakog znaka.
+
+Kada se mnogo znakova unese bez pauze, oni su vec dostupni narednim `getc`
+pozivima. Keyboard producer brzo puni mali bafer, blokira se na
+`spaceAvailable`, a scheduler tada daje procesor consumer-u i ostalim
+producer-ima. Zato izlaz deluje mnogo brze.
+
+Ovo ne menja rezultat testa: oba duza scenarija zavrsila su nakon Esc-a.
+
+Test fajlovi nisu menjani.
 
 ## Test 7: provera korisnickog rezima
 
