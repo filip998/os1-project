@@ -26,7 +26,7 @@ class Riscv {
 
     private:
         //supervisor trap handler
-        static void handle_supervisor_trap();
+        static void handle_supervisor_trap(uint64* frame);
 
 };
 
@@ -46,4 +46,3 @@ inline void Riscv::ms_sstatus(uint64 mask) {
 
 
 #endif //OS_PROJECT_RISCV_H
-

@@ -14,7 +14,7 @@ class Handlers {
         static void handle_timer_interrupt();
         static void handle_console_interrupt();
         static void handle_exception();
-        static void handle_sys_call();
+        static void handle_sys_call(uint64* frame);
 
     private:
         //clear sip bit
@@ -29,23 +29,23 @@ class Handlers {
         static void w_sstatus(uint64 sstatus);
 
         //sys call handlers
-        static void handle_mem_alloc();
-        static void handle_mem_free();
+        static void handle_mem_alloc(uint64* frame);
+        static void handle_mem_free(uint64* frame);
 
-        static void handle_thread_create();
-        static void handle_thread_exit();
+        static void handle_thread_create(uint64* frame);
+        static void handle_thread_exit(uint64* frame);
         static void handle_thread_dispatch();
-        static void handle_time_sleep();
+        static void handle_time_sleep(uint64* frame);
 
-        static void handle_sem_open();
-        static void handle_sem_close();
-        static void handle_sem_wait();
-        static void handle_sem_signal();
-        static void handle_sem_wait_n();
-        static void handle_sem_signal_n();
+        static void handle_sem_open(uint64* frame);
+        static void handle_sem_close(uint64* frame);
+        static void handle_sem_wait(uint64* frame);
+        static void handle_sem_signal(uint64* frame);
+        static void handle_sem_wait_n(uint64* frame);
+        static void handle_sem_signal_n(uint64* frame);
 
-        static void handle_getc();
-        static void handle_putc();
+        static void handle_getc(uint64* frame);
+        static void handle_putc(uint64* frame);
 };
 
 inline void Handlers::mc_sip(uint64 mask) {

@@ -21,6 +21,14 @@ enum sys_call {
     PUTC = 0x42
 };
 
+enum register_slot {
+    REG_A0 = 10,
+    REG_A1 = 11,
+    REG_A2 = 12,
+    REG_A6 = 16,
+    REG_A7 = 17
+};
+
 void Handlers::handle_timer_interrupt() {
     mc_sip(1<<1);
     //TCB::decrease_time_slice();
@@ -39,196 +47,141 @@ void Handlers::handle_console_interrupt() {
 
 }
 
-void Handlers::handle_mem_alloc() {
-    //load arguments from a1 register
-    size_t blocks;
-    __asm__ volatile("mv %0, a1" : "=r"(blocks));
-
-    //store result into a0
+void Handlers::handle_mem_alloc(uint64* frame) {
+    size_t blocks = frame[REG_A1];
     void* result = Mem::mem_alloc(blocks);
-    __asm__ volatile("mv a0, %0" : : "r"(result));
+    frame[REG_A0] = reinterpret_cast<uint64>(result);
 }
 
-void Handlers::handle_mem_free() {
-    //load argument from a1 register
-    void* p;
-    __asm__ volatile("mv %0, a1" : "=r"(p));
-
-    //store result into a0 register
+void Handlers::handle_mem_free(uint64* frame) {
+    void* p = reinterpret_cast<void*>(frame[REG_A1]);
     int result = Mem::mem_free(p);
-    __asm__ volatile("mv a0, %0" : : "r"(result));
+    frame[REG_A0] = static_cast<uint64>(result);
 }
 
 
-void Handlers::handle_thread_create() {
-    //load arguments from registers
-    thread_t* handle;
-    __asm__ volatile("mv %0, a1" : "=r"(handle));
+void Handlers::handle_thread_create(uint64* frame) {
+    thread_t* handle = reinterpret_cast<thread_t*>(frame[REG_A1]);
+    void(*start_routine)(void*) = reinterpret_cast<void(*)(void*)>(frame[REG_A2]);
+    void* arg = reinterpret_cast<void*>(frame[REG_A6]);
+    uint64* stack = reinterpret_cast<uint64*>(frame[REG_A7]);
 
-    void(*start_routine)(void*);
-    __asm__ volatile("mv %0, a2" : "=r"(start_routine));
-
-    void* arg;
-    __asm__ volatile("mv %0, a6" : "=r"(arg));
-
-    uint64* stack;
-    __asm__ volatile("mv %0, a7" : "=r"(stack));
-
-    //store result into a0 register
     int result = TCB::create_thread(handle, start_routine, arg, stack);
-    __asm__ volatile("mv a0, %0" : : "r"(result));
+    frame[REG_A0] = static_cast<uint64>(result);
 }
 
-void Handlers::handle_thread_exit() {
+void Handlers::handle_thread_exit(uint64* frame) {
     int result = TCB::thread_exit();
-
-    //store result into a0 register
-    __asm__ volatile("mv a0, %0" : : "r"(result));
+    frame[REG_A0] = static_cast<uint64>(result);
 }
 
 void Handlers::handle_thread_dispatch() {
     TCB::thread_dispatch();
 }
 
-void Handlers::handle_time_sleep() {
-    //load arguments from register
-    time_t time;
-    __asm__ volatile("mv %0, a1" : "=r"(time));
-
-    //stoe result into a0 register
+void Handlers::handle_time_sleep(uint64* frame) {
+    time_t time = frame[REG_A1];
     int result = TCB::time_sleep(time);
-    __asm__ volatile("mv a0, %0" : : "r"(result));
+    frame[REG_A0] = static_cast<uint64>(result);
 }
 
-void Handlers::handle_sem_open() {
-    //load argumenet from a1 register
-    sem_t* sem;
-    __asm__ volatile("mv %0, a1" : "=r"(sem));
-
-    //load argument from a2 register
-    unsigned init;
-    __asm__ volatile("mv %0, a2" : "=r"(init));
-
-    //store result into a0 register
+void Handlers::handle_sem_open(uint64* frame) {
+    sem_t* sem = reinterpret_cast<sem_t*>(frame[REG_A1]);
+    unsigned init = static_cast<unsigned>(frame[REG_A2]);
     int result = semaphore::sem_open(sem, init);
-    __asm__ volatile("mv a0, %0" : : "r"(result));
+    frame[REG_A0] = static_cast<uint64>(result);
 }
 
-void Handlers::handle_sem_close() {
-    //load argument from a1 register
-    sem_t sem;
-    __asm__ volatile("mv %0, a1" : "=r"(sem));
-
-    //store result into a0 register
+void Handlers::handle_sem_close(uint64* frame) {
+    sem_t sem = reinterpret_cast<sem_t>(frame[REG_A1]);
     int result = semaphore::sem_close(sem);
-    __asm__ volatile("mv a0, %0" : : "r"(result));
+    frame[REG_A0] = static_cast<uint64>(result);
 }
 
-void Handlers::handle_sem_wait() {
-    //load argument from a1 register
-    sem_t sem;
-    __asm__ volatile("mv %0, a1" : "=r"(sem));
-
-    //store result into a0 register
+void Handlers::handle_sem_wait(uint64* frame) {
+    sem_t sem = reinterpret_cast<sem_t>(frame[REG_A1]);
     int result = semaphore::sem_wait(sem);
-    __asm__ volatile("mv a0, %0" : : "r"(result));
+    frame[REG_A0] = static_cast<uint64>(result);
 }
 
-void Handlers::handle_sem_signal() {
-    //load argument from a1 register
-    sem_t sem;
-    __asm__ volatile("mv %0, a1" : "=r"(sem));
-
-    //store result into a0 regsiter
+void Handlers::handle_sem_signal(uint64* frame) {
+    sem_t sem = reinterpret_cast<sem_t>(frame[REG_A1]);
     int result = semaphore::sem_signal(sem);
-    __asm__ volatile("mv a0, %0" : : "r"(result));
+    frame[REG_A0] = static_cast<uint64>(result);
 }
 
-void Handlers::handle_sem_wait_n() {
-    sem_t sem;
-    unsigned n;
-
-    __asm__ volatile("mv %0, a1" : "=r"(sem));
-    __asm__ volatile("mv %0, a2" : "=r"(n));
-
+void Handlers::handle_sem_wait_n(uint64* frame) {
+    sem_t sem = reinterpret_cast<sem_t>(frame[REG_A1]);
+    unsigned n = static_cast<unsigned>(frame[REG_A2]);
     int result = semaphore::sem_wait_n(sem, n);
-
-    __asm__ volatile("mv a0, %0" : : "r"(result));
+    frame[REG_A0] = static_cast<uint64>(result);
 }
 
-void Handlers::handle_sem_signal_n() {
-    sem_t sem;
-    unsigned n;
-
-    __asm__ volatile("mv %0, a1" : "=r"(sem));
-    __asm__ volatile("mv %0, a2" : "=r"(n));
-
+void Handlers::handle_sem_signal_n(uint64* frame) {
+    sem_t sem = reinterpret_cast<sem_t>(frame[REG_A1]);
+    unsigned n = static_cast<unsigned>(frame[REG_A2]);
     int result = semaphore::sem_signal_n(sem, n);
-
-    __asm__ volatile("mv a0, %0" : : "r"(result));
+    frame[REG_A0] = static_cast<uint64>(result);
 }
 
-void Handlers::handle_getc() {
+void Handlers::handle_getc(uint64* frame) {
     char result = __getc();
-    __asm__ volatile("mv a0, %0" : : "r"(result));
+    frame[REG_A0] = static_cast<uint64>(result);
 }
 
-void Handlers::handle_putc() {
-    char chr;
-    __asm__ volatile("mv %0, a1" : "=r"(chr));
-
-     __putc(chr);
+void Handlers::handle_putc(uint64* frame) {
+    char chr = static_cast<char>(frame[REG_A1]);
+    __putc(chr);
 }
 
-void Handlers::handle_sys_call() {
-    uint64 SYS_CALL;
-    __asm__ volatile("mv %0, a0" : "=r"(SYS_CALL));
+void Handlers::handle_sys_call(uint64* frame) {
+    uint64 SYS_CALL = frame[REG_A0];
 
     uint64 volatile sepc = r_sepc() + 4;
     uint64 volatile sstatus = r_sstatus();
 
     switch (SYS_CALL) {
         case MEM_ALLOC:
-            handle_mem_alloc();
+            handle_mem_alloc(frame);
             break;
         case MEM_FREE:
-            handle_mem_free();
+            handle_mem_free(frame);
             break;
         case THREAD_CREATE:
-            handle_thread_create();
+            handle_thread_create(frame);
             break;
         case THREAD_EXIT:
-            handle_thread_exit();
+            handle_thread_exit(frame);
             break;
         case THREAD_DISPATCH:
             handle_thread_dispatch();
             break;
         case SEM_OPEN:
-            handle_sem_open();
+            handle_sem_open(frame);
             break;
         case SEM_CLOSE:
-            handle_sem_close();
+            handle_sem_close(frame);
             break;
         case SEM_WAIT:
-            handle_sem_wait();
+            handle_sem_wait(frame);
             break;
         case SEM_SIGNAL:
-            handle_sem_signal();
+            handle_sem_signal(frame);
             break;
         case TIME_SLEEP:
             //handle_time_sleep();
             break;
         case SEM_WAIT_N:
-            handle_sem_wait_n();
+            handle_sem_wait_n(frame);
             break;
         case SEM_SIGNAL_N:
-            handle_sem_signal_n();
+            handle_sem_signal_n(frame);
             break;
         case PUTC:
-            handle_putc();
+            handle_putc(frame);
             break;
         case GETC:
-            handle_getc();
+            handle_getc(frame);
             break;
         default:
             break;
@@ -238,4 +191,3 @@ void Handlers::handle_sys_call() {
     w_sstatus(sstatus);
     w_sepc(sepc);
 }
-

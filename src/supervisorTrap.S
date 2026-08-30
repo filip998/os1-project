@@ -1,4 +1,4 @@
-.extern _ZN5Riscv22handle_supervisor_trapEv
+.extern _ZN5Riscv22handle_supervisor_trapEPm
 
 .align 4
 .global _ZN5Riscv14supervisorTrapEv
@@ -11,7 +11,8 @@ _ZN5Riscv14supervisorTrapEv:
     sd x\index, \index * 8(sp)
     .endr
 
-    call _ZN5Riscv22handle_supervisor_trapEv
+    mv a0, sp
+    call _ZN5Riscv22handle_supervisor_trapEPm
 
     # restore everything EXCEPT sp (x2)
     .irp index,0,1,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31
