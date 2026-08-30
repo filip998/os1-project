@@ -10,11 +10,63 @@ njegove zavrsne oznake, a ne samo da je zapoceo izvrsavanje.
 
 | Test | Oblast | Status |
 | --- | --- | --- |
+| Memorijska dijagnostika | `mem_alloc` / `mem_free` kroz javni C API | PROLAZI |
 | 1 | Niti kroz C API i sinhrona promena konteksta | PROLAZI |
 | 2 | Niti kroz C++ API | PROLAZI |
 | 7 | Provera izvrsavanja korisnickog koda u U-mode-u | PROLAZI (GDB) |
 
 Testovi 3-6 nisu deo trenutnog opsega i iskljuceni su u `src/userMain.cpp`.
+
+## Memorijska dijagnostika kroz C API
+
+Privremeni dijagnosticki harness koristi samo javne funkcije:
+
+```cpp
+mem_alloc(size);
+mem_free(pointer);
+```
+
+Zato svaka operacija prolazi kroz stvarni produkcioni put:
+
+```text
+C API -> ecall -> supervisorTrap -> Handlers -> Mem
+```
+
+Harness je odvojen od zvanicnih testova, nalazi se u gitignored
+`debug-artifacts/` direktorijumu i ne ulazi u predajni kod.
+
+### Rezultat
+
+Status: **PROLAZI**
+
+Potvrdjeno je:
+
+- razumne alokacije vracaju pokazivac koji nije `nullptr`;
+- pokazivaci su poravnati za `uint64`;
+- svih trazenih korisnih bajtova moze da se upise i ponovo procita;
+- aktivne alokacije se ne preklapaju;
+- osnovno oslobadjanje vraca uspeh;
+- oslobodjeni prostor se ponovo koristi;
+- susedni slobodni fragmenti se spajaju;
+- ponovljene velike alokacije na kraju vrate `nullptr`;
+- svi blokovi iz exhaustion testa mogu da se oslobode;
+- nova alokacija ponovo uspeva nakon exhaustion-a.
+
+Zavrsna oznaka:
+
+```text
+MEMORY_DIAGNOSTICS_PASS
+```
+
+Lokalni harness i log:
+
+```text
+debug-artifacts/memory-diagnostic-userMain.cpp
+debug-artifacts/memory-diagnostic-run.log
+```
+
+Posle testa VM kopija je vracena na kanonski `src/userMain.cpp` i kernel je
+ponovo cisto izgradjen. Host izvorni kod nije menjan radi dijagnostike.
 
 ## Test 1: niti kroz C API
 

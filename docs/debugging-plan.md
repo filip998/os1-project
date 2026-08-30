@@ -2,8 +2,8 @@
 
 ## Trenutno stanje pri handoff-u
 
-Prvi `bootstrap-working` milestone je dostignut. Dalji rad je zaustavljen radi
-korisnickog pregleda, pre pokretanja memorijskih i thread test faza.
+`bootstrap-working` milestone, memorijska dijagnostika i ciljani javni testovi
+1, 2 i 7 su zavrseni. Rad je spreman za zavrsni read-only pregled opsega.
 
 Zavrseno:
 
@@ -33,12 +33,26 @@ Unesite broj testa? [1-7]
 Niste uneli odgovarajuci broj za test
 ```
 
-Javni testovi 1, 2 i 7 jos nisu pokrenuti. Memorijski dijagnosticki testovi
-takodje nisu pokrenuti. Git status na checkpoint-u mora biti cist, a tag
-`bootstrap-working` oznacava ovo stanje.
+- odvojeni memorijski harness je kroz javni `mem_alloc`/`mem_free` put potvrdio
+  alokaciju, poravnanje, nepreklapanje, reuse, coalescing, exhaustion i
+  oporavak; zavrsio je sa `MEMORY_DIAGNOSTICS_PASS`;
+- originalni javni Test 1 je zavrsen do svoje zavrsne oznake;
+- originalni javni Test 2 je zavrsen do svoje zavrsne oznake, ukljucujuci
+  destruktore i `delete` pozive;
+- Test 7 je GDB-om potvrdjen: `MPP=0`, `mcause=2`, a `mepc` pokazuje na
+  privilegovanu `csrr t6,sepc` instrukciju;
+- detaljna evidencija testova je u `docs/test-status.md`;
+- dijagnosticki harness i sirovi logovi ostaju u gitignored
+  `debug-artifacts/` i ne ulaze u predajni kod.
 
-Nastavak je dozvoljen tek posle posebnog korisnickog odobrenja. Tada se prelazi
-na Todo 6, pa redom na memoriju, javni test 1, javni test 2 i GDB dokaz testa 7.
+Tag `bootstrap-working` oznacava prvi meni checkpoint. Tag `memory-working`
+oznacava stanje u kom memorijska dijagnostika i ciljani javni testovi prolaze.
+Git status na oba checkpoint-a mora biti cist.
+
+Sledeci korak je Todo 10: read-only pregled celog opsega prema PDF-u. Posebno
+proveriti poznatu `thread_create` ABI neuskladjenost (`a6/a7` umesto `a3/a4`)
+i zahtev za uklanjanje `lib/mem.lib` kada se koristi studentski alokator.
+Nijednu novu izmenu ne primenjivati bez zasebnog dokaza, RCA-a i odobrenja.
 
 ## Problem i cilj
 
