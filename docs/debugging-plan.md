@@ -2,49 +2,43 @@
 
 ## Trenutno stanje pri handoff-u
 
-Rad je pauziran na zahtev korisnika da bi nastavak bio pokrenut iz nove coding sesije vezane za Git repo.
+Prvi `bootstrap-working` milestone je dostignut. Dalji rad je zaustavljen radi
+korisnickog pregleda, pre pokretanja memorijskih i thread test faza.
 
 Zavrseno:
 
-- formiran je Git repo `~/code/os1-project`;
-- registrovan je kao lokalni Copilot projekat `os1-project`;
-- napravljeni su provenance checkpoint-i za ETF bazu, sestrin izvorni kod i normalizovan test harness;
-- generisani `build/`, `kernel`, `kernel.asm` i `.gdbinit` nisu uvezeni;
-- dodat je `docs/provenance.md`;
-- dodat je ponovljiv QEMU/SSH workflow u `tools/`;
-- VM je uspesno podignuta kao Ubuntu 20.04 x86_64 kroz QEMU TCG;
-- u VM je instaliran samo `openssh-server`, bez sistemskog upgrade-a;
-- potvrdjeni su guest korisnik `os`, kljucni SSH pristup na `127.0.0.1:2222` i automatski `rsync`;
-- potvrdjene su verzije postojecih VM alata: GNU Make 4.2.1, `riscv64-linux-gnu-g++`, QEMU 4.2.1 i GDB multiarch 9.2;
-- prvi `make clean && make` je pokrenut iz cistog izvornog koda;
-- clean build je dokazao RCA 001: `src/supervisorTrap.s` se ne pronalazi jer Makefile skuplja samo `*.S`, pa linker ne nalazi `Riscv::supervisorTrap()`;
-- napisan je `docs/rca/001-supervisor-trap-file-extension.md`;
-- pripremljen je content-preserving rename `src/supervisorTrap.s -> src/supervisorTrap.S`;
-- nezavisni code review rename-a i RCA-a nije nasao probleme.
-
-Trenutni Git status mora ostati:
+- provenance istorija, lokalni projekat, QEMU/SSH/rsync workflow i zvanicna
+  Ubuntu 20.04 x86_64 VM ostaju kao ranije dokumentovani;
+- RCA 001 je potvrdio da `supervisorTrap.s` ne ulazi u clean build; rename u
+  `supervisorTrap.S` je 100% content-preserving i commitovan kao `0f7bd99`;
+- RCA 002 je GDB-om dokazao da trap restore pregazi validan `mem_alloc`
+  rezultat starim syscall kodom; trap-frame popravka je commitovana kao
+  `9edfa48`;
+- RCA 003 je dokazao da U-mode `ecall` nije delegiran S-mode-u; `medeleg`
+  popravka je commitovana kao `866473b`;
+- RCA 004 je dokazao da bazna konzola nije inicijalizovana i da
+  `console_write` skace kroz null pokazivac; `consoleinit` bootstrap je
+  commitovan kao `aca8889`;
+- RCA 005 je dokazao da konzolni ulaz nema povezanu PLIC/delegation/handler
+  putanju; popravka je commitovana kao `6dc8df7`;
+- svaki funkcionalni diff je prosao nezavisni code review;
+- poslednji `make clean && make` je uspeo iz cistog izvornog koda;
+- napravljeni su novi `build/src/supervisorTrap.o` i `kernel`;
+- GDB regresija je potvrdila validan heap stack, U-mode syscall putanju,
+  supervisor external interrupt, `console_handler` i `uartintr`;
+- zavrsna provera je sacekala stvarni meni, zatim poslala `0` i dobila:
 
 ```text
-A  docs/rca/001-supervisor-trap-file-extension.md
-R  src/supervisorTrap.s -> src/supervisorTrap.S
+Unesite broj testa? [1-7]
+Niste uneli odgovarajuci broj za test
 ```
 
-Ove dve promene su staged, ali NISU commitovane. Post-fix `make clean && make` jos nije pokrenut.
+Javni testovi 1, 2 i 7 jos nisu pokrenuti. Memorijski dijagnosticki testovi
+takodje nisu pokrenuti. Git status na checkpoint-u mora biti cist, a tag
+`bootstrap-working` oznacava ovo stanje.
 
-VM je trenutno zaustavljena. Nastavak nove sesije:
-
-1. procitati ovaj plan, `docs/provenance.md` i RCA 001;
-2. pregledati staged diff i potvrditi da je rename 100% content-preserving;
-3. pokrenuti VM sa `./tools/start-vm.sh`;
-4. cekati SSH kratkim proverama preko `./tools/ssh-vm.sh true`;
-5. sinhronizovati sa `./tools/sync-to-vm.sh`;
-6. pokrenuti post-fix `make clean && make` unutar `/home/os/os1-project`;
-7. ako build uspe, proveriti da je napravljen `build/src/supervisorTrap.o`;
-8. tek tada commitovati RCA 001 i rename kao jedan bug-fix commit;
-9. preci na Todo 4 i GDB dokaz pre-menu runtime pada;
-10. stati kada se pojavi meni i napraviti `bootstrap-working` checkpoint.
-
-Naredna runtime hipoteza nije jos dokazana: trap rutina mozda restauracijom starog `a0` pregazi povratnu vrednost `mem_alloc`, zbog cega nova nit dobija nevalidan stack pokazivac. Ne menjati trap kod dok GDB ne potvrdi ceo lanac dokaza opisan u Todo 4.
+Nastavak je dozvoljen tek posle posebnog korisnickog odobrenja. Tada se prelazi
+na Todo 6, pa redom na memoriju, javni test 1, javni test 2 i GDB dokaz testa 7.
 
 ## Problem i cilj
 
