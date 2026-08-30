@@ -30,7 +30,7 @@ static void producerKeyboard(void *arg) {
     threadEnd = 1;
     data->buffer->put('!');
 
-    semaphore::sem_signal(data->wait);
+    sem_signal(data->wait);
 }
 
 static void producer(void *arg) {
@@ -46,7 +46,7 @@ static void producer(void *arg) {
         }
     }
 
-    semaphore::sem_signal(data->wait);
+    sem_signal(data->wait);
 }
 
 static void consumer(void *arg) {
@@ -73,7 +73,7 @@ static void consumer(void *arg) {
         putc(key);
     }
 
-    semaphore::sem_signal(data->wait);
+    sem_signal(data->wait);
 }
 
 void producerConsumer_C_API() {
@@ -102,7 +102,7 @@ void producerConsumer_C_API() {
 
     Buffer *buffer = new Buffer(n);
 
-    semaphore::sem_open(&waitForAll, 0);
+    sem_open(&waitForAll, 0);
 
     thread_t threads[threadNum];
     thread_t consumerThread;
@@ -127,10 +127,10 @@ void producerConsumer_C_API() {
     thread_dispatch();
 
     for (int i = 0; i <= threadNum; i++) {
-        semaphore::sem_wait(waitForAll);
+        sem_wait(waitForAll);
     }
 
-    semaphore::sem_close(waitForAll);
+    sem_close(waitForAll);
 
     delete buffer;
 

@@ -81,7 +81,10 @@ int thread_exit() {
 void thread_dispatch() {
     __asm__ volatile(
     "li a0, 0x13\n\t" //Set the system code to 0x13 (thread_dispatch)
-    "ecall\n\t"); //Enter the privileged mode
+    "ecall\n\t" //Enter the privileged mode
+    :
+    :
+    : "a0", "memory");
 }
 
 int sem_open(sem_t* handle, unsigned init) {
@@ -119,10 +122,14 @@ int sem_close (sem_t handle) {
 int sem_wait(sem_t id) {
     int result;
 
-    __asm__ volatile("li a0, 0x23"); //set the system call code to 0x23
-    __asm__ volatile("mv a1, %0" : : "r"(id)); //set the id to a1 register (argument)
-    __asm__ volatile("ecall"); // etnter the privileged mode
-    __asm__ volatile("mv %0, a0" : "=r"(result)); // move the return value to a0 register
+    __asm__ volatile(
+    "mv a1, %1\n\t"
+    "li a0, 0x23\n\t"
+    "ecall\n\t"
+    "mv %0, a0"
+    : "=r"(result)
+    : "r"(id)
+    : "a0", "a1", "memory");
 
     return result;
 }
@@ -130,10 +137,14 @@ int sem_wait(sem_t id) {
 int sem_signal(sem_t id) {
     int result;
 
-    __asm__ volatile("li a0, 0x24"); //set the system call code to 0x24 (sem_signal)
-    __asm__ volatile("mv a1, %0" : : "r"(id)); // set the id to a1 register (argument)
-    __asm__ volatile("ecall"); // enter the privileged mode
-    __asm__ volatile("mv %0, a0" : "=r"(result)); // move the return value to a0 register
+    __asm__ volatile(
+    "mv a1, %1\n\t"
+    "li a0, 0x24\n\t"
+    "ecall\n\t"
+    "mv %0, a0"
+    : "=r"(result)
+    : "r"(id)
+    : "a0", "a1", "memory");
 
     return result;
 }
@@ -141,11 +152,15 @@ int sem_signal(sem_t id) {
 int sem_wait_n(sem_t id, unsigned n) {
     int result;
 
-    __asm__ volatile("li a0, 0x25"); // enter the system call code to 0x25(sem_wait_n)
-    __asm__ volatile("mv a1, %0" : : "r"(id)); // set the id to a1 register (argument)
-    __asm__ volatile("mv a2, %0" : : "r"(n)); // set the n to a2 register (argument)
-    __asm__ volatile("ecall"); // enter the privileged mode
-    __asm__ volatile("mv %0, a0" : "=r"(result)); // move the return value to a0 register
+    __asm__ volatile(
+    "mv a1, %1\n\t"
+    "mv a2, %2\n\t"
+    "li a0, 0x25\n\t"
+    "ecall\n\t"
+    "mv %0, a0"
+    : "=r"(result)
+    : "r"(id), "r"(n)
+    : "a0", "a1", "a2", "memory");
 
     return result;
 }
@@ -153,11 +168,15 @@ int sem_wait_n(sem_t id, unsigned n) {
 int sem_signal_n(sem_t id, unsigned n) {
     int result;
 
-    __asm__ volatile("li a0, 0x26"); // enter the system call code to 0x26(sem_signal_n)
-    __asm__ volatile("mv a1, %0" : : "r"(id)); // set the id to a1 register (argument)
-    __asm__ volatile("mv a2, %0" : : "r"(n)); // set the n to a2 register (argument)
-    __asm__ volatile("ecall"); // enter the privileged mode
-    __asm__ volatile("mv %0, a0" : "=r"(result)); // move the return value to a0 register
+    __asm__ volatile(
+    "mv a1, %1\n\t"
+    "mv a2, %2\n\t"
+    "li a0, 0x26\n\t"
+    "ecall\n\t"
+    "mv %0, a0"
+    : "=r"(result)
+    : "r"(id), "r"(n)
+    : "a0", "a1", "a2", "memory");
 
     return result;
 }
@@ -165,10 +184,14 @@ int sem_signal_n(sem_t id, unsigned n) {
 int time_sleep(time_t time) {
     int result;
 
-    __asm__ volatile("li a0, 0x31"); // enter the system call code to 0x31(time_sleep)
-    __asm__ volatile("mv a1, %0" : : "r"(time)); // set the time to a1 register (argument)
-    __asm__ volatile("ecall"); // enter the privileged mode
-    __asm__ volatile("mv %0, a0" : "=r"(result)); // move the return value to a0 register
+    __asm__ volatile(
+    "mv a1, %1\n\t"
+    "li a0, 0x31\n\t"
+    "ecall\n\t"
+    "mv %0, a0"
+    : "=r"(result)
+    : "r"(time)
+    : "a0", "a1", "memory");
 
     return result;
 }

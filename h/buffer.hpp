@@ -8,8 +8,6 @@
 #include "../h/syscall_c.h"
 #include "printing.hpp"
 
-#include "sem.h"
-
 class Buffer {
 private:
     int cap;
@@ -34,4 +32,3 @@ public:
 
 
 #endif //OS1_BUFFER_CPP_H
-

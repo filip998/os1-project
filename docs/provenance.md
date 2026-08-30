@@ -12,3 +12,9 @@ Radna kopija je formirana iz sledecih arhiva:
 Generisani `build/`, `kernel`, `kernel.asm` i `.gdbinit` iz sestrinog ZIP-a nisu uvezeni. Baseline mora da se prevede od nule.
 
 Testovi 1, 2 i 7 zadrzavaju zvanicnu logiku. Prilagodjene su samo include putanje potrebne zbog rasporeda direktorijuma. `userMain` je konfigurisan za nivoe 1 i 2 bez lokalnih debug ispisa.
+
+Naknadnim prosirenjem opsega na Test 3 utvrdjeno je da su njegov C test i
+`Buffer` u studentskom snapshot-u direktno pozivali internu klasu
+`semaphore`. Pozivi su vraceni na zvanicne `sem_open`, `sem_wait`,
+`sem_signal` i `sem_close` C API funkcije iz arhive
+`javniTestovi_2024_1_1.zip`; zadrzane su samo potrebne include putanje.
