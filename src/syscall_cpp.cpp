@@ -25,8 +25,7 @@ void Thread::dispatch() {
 }
 
 int Thread::sleep(time_t time) {
-    //return time_sleep(time);
-    return 0;
+    return time_sleep(time);
 }
 
 void Thread::threadWrapper(void *arg)  {
@@ -65,4 +64,3 @@ char Console::getc() {
 void Console::putc(char c) {
     ::putc(c);
 }
-

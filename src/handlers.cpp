@@ -35,7 +35,7 @@ void Handlers::handle_timer_interrupt() {
 
     mc_sip(1<<1);
     TCB::decrease_time_slice();
-    //Scheduler::update_sleeping();
+    Scheduler::update_sleeping();
 
     if (TCB::time_slice_expired()) {
         TCB::thread_dispatch();
@@ -175,7 +175,7 @@ void Handlers::handle_sys_call(uint64* frame) {
             handle_sem_signal(frame);
             break;
         case TIME_SLEEP:
-            //handle_time_sleep();
+            handle_time_sleep(frame);
             break;
         case SEM_WAIT_N:
             handle_sem_wait_n(frame);
