@@ -44,7 +44,7 @@ void Handlers::handle_exception() {
 }
 
 void Handlers::handle_console_interrupt() {
-
+    console_handler();
 }
 
 void Handlers::handle_mem_alloc(uint64* frame) {

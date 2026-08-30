@@ -9,6 +9,10 @@ _entry:
     li t0, (1 << 8) | (1 << 9)
     csrw medeleg, t0
 
+    # Delegiraj supervisor external interrupt u S-mode
+    li t0, (1 << 9)
+    csrw mideleg, t0
+
     # mstatus.MPP = Supervisor mode (01)
     csrr t0, mstatus
     li t1, ~(3 << 11)

@@ -18,8 +18,15 @@ class Riscv {
             SSTATUS_SIE = (1<<1),
         };
 
+        enum BitMaskSie {
+            SIE_SEIE = (1<<9),
+        };
+
         //mask set register sstatus
         static void ms_sstatus(uint64 mask);
+
+        //mask set register sie
+        static void ms_sie(uint64 mask);
 
         //supervisor trap
         static void supervisorTrap();
@@ -42,6 +49,10 @@ inline void Riscv::w_stvec(uint64 stvec) {
 
 inline void Riscv::ms_sstatus(uint64 mask) {
     __asm__ volatile("csrs sstatus, %[mask]" : : [mask] "r"(mask));
+}
+
+inline void Riscv::ms_sie(uint64 mask) {
+    __asm__ volatile("csrs sie, %[mask]" : : [mask] "r"(mask));
 }
 
 

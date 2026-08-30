@@ -5,6 +5,8 @@
 
 extern void userMain();
 extern "C" void consoleinit();
+extern "C" void plicinit();
+extern "C" void plicinithart();
 
 void wrapperUserMain(void*) {
     userMain();
@@ -13,6 +15,9 @@ void wrapperUserMain(void*) {
 int main() {
     Riscv::w_stvec((uint64)&Riscv::supervisorTrap);
     consoleinit();
+    plicinit();
+    plicinithart();
+    Riscv::ms_sie(Riscv::SIE_SEIE);
     Riscv::ms_sstatus(Riscv::SSTATUS_SIE);
 
     thread_t m;
